@@ -11,6 +11,7 @@ pub(crate) struct FreePointer(NonZeroU32);
 
 impl FreePointer {
     #[must_use]
+    #[inline]
     pub(crate) fn from_slot(slot: u32) -> Self {
         let value = slot
             .checked_add(1)
@@ -23,6 +24,7 @@ impl FreePointer {
 
     #[must_use]
     #[allow(clippy::integer_arithmetic)]
+    #[inline]
     pub(crate) fn slot(self) -> u32 {
         // This will never underflow due to the field being guaranteed non-zero.
         self.0.get() - 1
