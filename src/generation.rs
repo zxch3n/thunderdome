@@ -18,12 +18,14 @@ impl Generation {
     pub(crate) const DANGLING: Self = unsafe { Generation(NonZeroU32::new_unchecked(u32::MAX)) };
 
     #[must_use]
+    #[inline]
     pub(crate) fn first() -> Self {
         // This is safe because 1 is not zero.
         Generation(unsafe { NonZeroU32::new_unchecked(1) })
     }
 
     #[must_use]
+    #[inline]
     pub(crate) fn next(self) -> Self {
         let last_generation = self.0.get();
         let next_generation = last_generation.checked_add(1).unwrap_or(1);
@@ -32,10 +34,12 @@ impl Generation {
         Generation(unsafe { NonZeroU32::new_unchecked(next_generation) })
     }
 
+    #[inline]
     pub(crate) const fn to_u32(self) -> u32 {
         self.0.get()
     }
 
+    #[inline]
     pub(crate) const fn from_u32(gen: u32) -> Option<Self> {
         // match like this since `map` is not constant
         match NonZeroU32::new(gen) {

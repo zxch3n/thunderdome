@@ -39,6 +39,7 @@ impl Index {
 
     /// Convert this `Index` to an equivalent `u64` representation. Mostly
     /// useful for passing to code outside of Rust.
+    #[inline]
     #[allow(clippy::integer_arithmetic)]
     pub const fn to_bits(self) -> u64 {
         // This is safe because a `u32` bit-shifted by 32 will still fit in a `u64`.
@@ -56,6 +57,7 @@ impl Index {
     /// semver-compatible versions of Thunderdome. That is, using
     /// `Index::to_bits` in 0.4.0 and `Index::from_bits` in 0.4.2 is guaranteed
     /// to work.
+    #[inline]
     #[allow(clippy::integer_arithmetic)]
     pub const fn from_bits(bits: u64) -> Option<Self> {
         // By bit-shifting right by 32, we're undoing the left-shift in `to_bits`
@@ -71,12 +73,14 @@ impl Index {
     }
 
     /// Convert this `Index` into a generation, discarding its slot.
+    #[inline(always)]
     pub const fn generation(self) -> u32 {
         self.generation.to_u32()
     }
 
     /// Convert this `Index` into a slot, discarding its generation. Slots describe a
     /// location in an [`Arena`] and are reused when entries are removed.
+    #[inline(always)]
     pub const fn slot(self) -> u32 {
         self.slot
     }
@@ -137,6 +141,7 @@ pub(crate) struct EmptyEntry {
 
 impl<T> Arena<T> {
     /// Construct an empty arena.
+    #[inline(always)]
     pub const fn new() -> Self {
         Self {
             storage: Vec::new(),
@@ -147,6 +152,7 @@ impl<T> Arena<T> {
 
     /// Construct an empty arena with space to hold exactly `capacity` elements
     /// without reallocating.
+    #[inline(always)]
     pub fn with_capacity(capacity: usize) -> Self {
         Self {
             storage: Vec::with_capacity(capacity),
@@ -156,17 +162,20 @@ impl<T> Arena<T> {
     }
 
     /// Return the number of elements contained in the arena.
+    #[inline(always)]
     pub const fn len(&self) -> usize {
         self.len as usize
     }
 
     /// Return the number of elements the arena can hold without allocating,
     /// including the elements currently in the arena.
+    #[inline(always)]
     pub fn capacity(&self) -> usize {
         self.storage.capacity()
     }
 
     /// Returns whether the arena is empty.
+    #[inline(always)]
     pub const fn is_empty(&self) -> bool {
         self.len == 0
     }
@@ -340,6 +349,7 @@ impl<T> Arena<T> {
     /// that same slot but with a generation N < M, eventually after some number of insertions and
     /// removals it is possible we could end up with an index matching that old index. There are few
     /// cases where this is likely to be a problem, but it is still possible.
+    #[inline]
     pub fn insert_at(&mut self, index: Index, value: T) -> Option<T> {
         self.insert_at_inner(index.slot, Some(index.generation), value)
             .1
@@ -348,11 +358,13 @@ impl<T> Arena<T> {
     /// Insert a new value at a given slot, returning the old value if present. If the slot is
     /// already occupied, this will increment the generation of the slot, and invalidate any
     /// previous indices pointing to it.
+    #[inline]
     pub fn insert_at_slot(&mut self, slot: u32, value: T) -> (Index, Option<T>) {
         self.insert_at_inner(slot, None, value)
     }
 
     /// Returns true if the given index is valid for the arena.
+    #[inline]
     pub fn contains(&self, index: Index) -> bool {
         match self.storage.get(index.slot as usize) {
             Some(Entry::Occupied(occupied)) if occupied.generation == index.generation => true,
@@ -375,6 +387,7 @@ impl<T> Arena<T> {
 
     /// Get an immutable reference to a value inside the arena by
     /// [`Index`], returning `None` if the index is not contained in the arena.
+    #[inline]
     pub fn get(&self, index: Index) -> Option<&T> {
         match self.storage.get(index.slot as usize) {
             Some(Entry::Occupied(occupied)) if occupied.generation == index.generation => {
@@ -386,6 +399,7 @@ impl<T> Arena<T> {
 
     /// Get a mutable reference to a value inside the arena by [`Index`],
     /// returning `None` if the index is not contained in the arena.
+    #[inline]
     pub fn get_mut(&mut self, index: Index) -> Option<&mut T> {
         match self.storage.get_mut(index.slot as usize) {
             Some(entry) => entry.get_value_mut(index.generation),
@@ -471,6 +485,7 @@ impl<T> Arena<T> {
     /// Invalidate the given index and return a new index to the same value. This
     /// is roughly equivalent to `remove` followed by `insert`, but much faster.
     /// If the old index is already invalid, this method returns `None`.
+    #[inline]
     pub fn invalidate(&mut self, index: Index) -> Option<Index> {
         let entry = self.storage.get_mut(index.slot as usize)?;
 
@@ -490,6 +505,7 @@ impl<T> Arena<T> {
     /// Attempt to look up the given slot in the arena, disregarding any generational
     /// information, and retrieve an immutable reference to it. Returns `None` if the
     /// slot is empty.
+    #[inline]
     pub fn get_by_slot(&self, slot: u32) -> Option<(Index, &T)> {
         match self.storage.get(slot as usize) {
             Some(Entry::Occupied(occupied)) => {
@@ -506,6 +522,7 @@ impl<T> Arena<T> {
     /// Attempt to look up the given slot in the arena, disregarding any generational
     /// information, and retrieve a mutable reference to it. Returns `None` if the
     /// slot is empty.
+    #[inline]
     pub fn get_by_slot_mut(&mut self, slot: u32) -> Option<(Index, &mut T)> {
         match self.storage.get_mut(slot as usize) {
             Some(Entry::Occupied(occupied)) => {
@@ -557,6 +574,7 @@ impl<T> Arena<T> {
     }
 
     /// Clear the arena and drop all elements.
+    #[inline(always)]
     pub fn clear(&mut self) {
         self.drain().for_each(drop);
     }
@@ -564,6 +582,7 @@ impl<T> Arena<T> {
     /// Iterate over all of the indexes and values contained in the arena.
     ///
     /// Iteration order is not defined.
+    #[inline(always)]
     pub fn iter(&self) -> Iter<'_, T> {
         Iter {
             inner: self.storage.iter(),
@@ -576,6 +595,7 @@ impl<T> Arena<T> {
     /// mutable access to each value.
     ///
     /// Iteration order is not defined.
+    #[inline(always)]
     pub fn iter_mut(&mut self) -> IterMut<'_, T> {
         IterMut {
             inner: self.storage.iter_mut(),
@@ -591,6 +611,7 @@ impl<T> Arena<T> {
     /// If the iterator is dropped before it is fully consumed, any uniterated
     /// items will be dropped from the arena, and the arena will be empty.
     /// The arena's capacity will not be changed.
+    #[inline(always)]
     pub fn drain(&mut self) -> Drain<'_, T> {
         Drain {
             arena: self,
