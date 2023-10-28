@@ -1,4 +1,6 @@
-# Thunderdome
+# Thunderdome fork
+
+This fork add a `reserve` method.
 
 [![GitHub CI Status](https://github.com/LPGhatguy/thunderdome/workflows/CI/badge.svg)](https://github.com/LPGhatguy/thunderdome/actions)
 [![thunderdome on crates.io](https://img.shields.io/crates/v/thunderdome.svg)](https://crates.io/crates/thunderdome)
